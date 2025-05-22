@@ -1,7 +1,7 @@
 # 1. 깃 레포지토리 clone
 
 ```
-git clone https://github.com/SmithSEE/SmithSEE_AI.git
+git clone https://github.com/SmithSEE/SmithSEE_FE.git
 ```
 
 # 2. 최신 main 브랜치 가져오기(매번 처음에 실시)
