@@ -38,7 +38,7 @@ export default function Screen5() {
 
   // ✅ 백엔드 서버로 이미지 전송 함수
   const uploadImageToServer = async (imageUri) => {
-    const apiUrl = 'http://192.168.219.108:8080/upload'; // ✅ 여기에 실제 서버 주소 입력
+    const apiUrl = 'http://172.30.1.41:8080/upload'; // ✅ 여기에 실제 서버 주소 입력
     const filename = imageUri.split('/').pop();
     const match = /\.(\w+)$/.exec(filename ?? '');
     const type = match ? `image/${match[1]}` : `image`;
@@ -59,12 +59,24 @@ export default function Screen5() {
         },
       });
 
-      //
-      //
       //여기 await response.text(); 부분 text -> json으로 바꾸면 json응답 받는거 
       const data = await response.json();
       console.log('✅ 서버 응답:', data);
       Alert.alert('업로드 완료', '서버에 이미지가 성공적으로 업로드되었습니다.');
+
+      const { result, combinedText, log } = data;
+
+      if (result.isSmishing) {
+        Alert.alert(
+          '⚠️ 스미싱 의심',
+          `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
+        );
+      } else {
+        Alert.alert(
+          '✅ 안전한 문자',
+          `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
+        );
+      }
     } catch (error) {
       console.error('❗ 업로드 실패:', error);
       Alert.alert('업로드 실패', '이미지를 서버에 전송하는 중 문제가 발생했습니다.');
