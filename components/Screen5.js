@@ -6,7 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 
-const API_URL = 'http://192.168.4.188:8080/ocr';
+//ipconfig getifaddr en0
+const API_URL = 'https://smishing-api-130947708321.asia-northeast3.run.app/ocr';
 
 const PICKER_OPTS = {
   mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -66,7 +67,7 @@ export default function Screen5() {
 
   const processTo16x9 = async (asset) => {
     const { uri, width, height } = asset;
-    const targetRatio = 16 / 9;
+    const targetRatio = 9 / 16;
 
     let cropWidth = width;
     let cropHeight = Math.round(width / targetRatio);

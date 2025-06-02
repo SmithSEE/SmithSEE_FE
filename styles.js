@@ -284,17 +284,17 @@ screen5UploadButtonText: {
   },
 
   // 홈으로 가기 버튼
-  screen7HomeButton: {
-    position: 'absolute',
-    bottom: height * 0.2,
-    alignSelf: 'center',
-  },
+  // screen7HomeButton: {
+  //   position: 'absolute',
+  //   bottom: height * 0.2,
+  //   alignSelf: 'center',
+  // },
 
-  screen7HomeButtonImage: {
-    width: width * 0.35,
-    height: height * 0.05,
-    resizeMode: 'contain',
-  },
+  // screen7HomeButtonImage: {
+  //   width: width * 0.35,
+  //   height: height * 0.05,
+  //   resizeMode: 'contain',
+  // },
 
   // ======================= Screen8 =======================
 
