@@ -1,11 +1,23 @@
+// screens/Screen5.js
 import React from 'react';
-import { View, Image, TouchableOpacity, Text, Alert } from 'react-native';
+import { View, Image, TouchableOpacity, Text, Alert, Platform } from 'react-native';
 import { styles } from '../styles';
 import { useNavigation } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker'; // ✅ 이미지 픽커 추가
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+
+const API_URL = 'http://192.168.4.188:8080/ocr';
+
+const PICKER_OPTS = {
+  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  allowsEditing: false,
+  quality: 1,
+  selectionLimit: 5,
+  allowsMultipleSelection: true,
+};
 
 export default function Screen5() {
-  const navigation = useNavigation(); // navigation 객체 사용
+  const navigation = useNavigation();
 
   const handleImageUpload = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -13,103 +25,103 @@ export default function Screen5() {
       Alert.alert('권한 필요', '사진 보관함 접근 권한이 필요합니다.');
       return;
     }
+
+    const picker = await ImagePicker.launchImageLibraryAsync(PICKER_OPTS);
+    if (picker.canceled) return;
+
+    const assets = picker.assets || [];
+    if (assets.length === 0) return;
+
     try {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'Images', // ✅ 문자열로 직접 지정
-      allowsEditing: true,
-      quality: 1,
-    });
+      const results = await Promise.all(
+        assets.map(async (asset) => {
+          const processedUri = await processTo16x9(asset);
+          const response = await uploadToServer(processedUri);
 
-    console.log("이미지 선택 결과:", result);
+          const { result, combinedText } = response;
 
-    if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      console.log('✅ 선택한 이미지 URI:', imageUri);
+          if (result?.isSmishing) {
+            Alert.alert(
+              '⚠️ 스미싱 의심',
+              `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
+            );
+          } else {
+            Alert.alert(
+              '✅ 안전한 문자',
+              `위험 점수: ${result?.riskScore?.toFixed(2) ?? 'N/A'}\n\n문자 내용:\n${combinedText}`
+            );
+          }
 
-        // 백엔드 전송 함수 호출
-        await uploadImageToServer(imageUri);
-      } else {
-        console.log("❌ 사용자가 취소했습니다.");
-      }
-    } catch (error) {
-      console.log("❗ 이미지 선택 중 오류:", error);
+          return response;
+        })
+      );
+
+      console.log('✅ 모든 업로드 완료:', results);
+      Alert.alert('완료', `${results.length}장 업로드를 마쳤습니다.`);
+    } catch (err) {
+      console.error('❗ 처리/업로드 오류:', err);
+      Alert.alert('실패', '이미지를 업로드하는 중 문제가 발생했습니다.');
     }
   };
 
-  // ✅ 백엔드 서버로 이미지 전송 함수
-  const uploadImageToServer = async (imageUri) => {
-    const apiUrl = 'http://172.30.1.41:8080/upload'; // ✅ 여기에 실제 서버 주소 입력
-    const filename = imageUri.split('/').pop();
-    const match = /\.(\w+)$/.exec(filename ?? '');
-    const type = match ? `image/${match[1]}` : `image`;
+  const processTo16x9 = async (asset) => {
+    const { uri, width, height } = asset;
+    const targetRatio = 16 / 9;
 
-    const formData = new FormData();
-    formData.append('file', {
-      uri: imageUri,
+    let cropWidth = width;
+    let cropHeight = Math.round(width / targetRatio);
+
+    if (cropHeight > height) {
+      cropHeight = height;
+      cropWidth = Math.round(height * targetRatio);
+    }
+
+    const originX = Math.round((width - cropWidth) / 2);
+    const originY = Math.round((height - cropHeight) / 2);
+
+    const { uri: cropped } = await ImageManipulator.manipulateAsync(
+      uri,
+      [
+        { crop: { originX, originY, width: cropWidth, height: cropHeight } },
+        { resize: { width: 1080 } },
+      ],
+      { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+    );
+
+    return cropped;
+  };
+
+  const uploadToServer = async (imageUri) => {
+    const filename = imageUri.split('/').pop() || `img_${Date.now()}.jpg`;
+
+    const form = new FormData();
+    form.append('file', {
+      uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
       name: filename,
-      type: type,
+      type: 'image/jpeg',
     });
 
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: form,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
 
-      //여기 await response.text(); 부분 text -> json으로 바꾸면 json응답 받는거 
-      const data = await response.json();
-      console.log('✅ 서버 응답:', data);
-      Alert.alert('업로드 완료', '서버에 이미지가 성공적으로 업로드되었습니다.');
-
-      const { result, combinedText, log } = data;
-
-      if (result.isSmishing) {
-        Alert.alert(
-          '⚠️ 스미싱 의심',
-          `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
-        );
-      } else {
-        Alert.alert(
-          '✅ 안전한 문자',
-          `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
-        );
-      }
-    } catch (error) {
-      console.error('❗ 업로드 실패:', error);
-      Alert.alert('업로드 실패', '이미지를 서버에 전송하는 중 문제가 발생했습니다.');
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
   };
 
-  const handleInfoPress = () => {
-    navigation.navigate('Screen8'); // Screen8로 이동
-  };
+  const handleInfoPress = () => navigation.navigate('Screen8');
 
   return (
     <View style={styles.screen5Container}>
-      {/* 정보 버튼 */}
       <TouchableOpacity style={styles.screen5InfoButton} onPress={handleInfoPress}>
-        <Image
-          source={require('../assets/Info.png')} // 오른쪽 상단 info 아이콘
-          style={styles.screen5InfoIcon}
-        />
+        <Image source={require('../assets/Info.png')} style={styles.screen5InfoIcon} />
       </TouchableOpacity>
 
-      {/* 캐릭터 이미지 */}
-      <Image
-        source={require('../assets/Group 16.png')}
-        style={styles.screen5Character}
-      />
+      <Image source={require('../assets/Group 16.png')} style={styles.screen5Character} />
+      <Image source={require('../assets/text4.png')} style={styles.screen5TextImage} />
 
-      {/* 텍스트 이미지 */}
-      <Image
-        source={require('../assets/text4.png')}
-        style={styles.screen5TextImage}
-      />
-
-      {/* 버튼 이미지 */}
       <TouchableOpacity style={styles.screen5UploadButton} onPress={handleImageUpload}>
         <Text style={styles.screen5UploadButtonText}>사진 업로드</Text>
       </TouchableOpacity>

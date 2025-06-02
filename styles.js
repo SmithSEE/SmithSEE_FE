@@ -211,7 +211,11 @@ screen5UploadButton: {
 screen5UploadButtonText: {
   color: '#fff',
   fontSize: 18,
+  left: width * 0.01,
+  letterSpacing: 0.85,
 },
+
+
   // ======================= Screen6 =======================
   screen6Container: {
     flex: 1,

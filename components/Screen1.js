@@ -14,15 +14,14 @@ export default function Screen1() {
     return () => clearTimeout(timer);
   }, []);
 
-  // 실제로 데이터 불러올 때까지 기다리기(API요청, 초기 설정 등)
-  // useEffect(() => {
-  // const load = async () => {
-  //   await fetchData(); // API 호출 or 초기 세팅
-  //   navigation.replace('Screen2');
-  // };
-
-  // load();
-  // }, []);
+// // 실제로 데이터 불러올 때까지 기다리기(API요청, 초기 설정 등)
+//     useEffect(() => {
+//     const load = async () => {
+//       await fetchData(); // API 호출 or 초기 세팅
+//       navigation.replace('Screen');
+//     };
+//     load();
+//     }, []);
 
 
   return (
