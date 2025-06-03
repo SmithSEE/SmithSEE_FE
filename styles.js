@@ -5,7 +5,7 @@ const { width, height } = Dimensions.get('window');
 export const styles = StyleSheet.create({
   screen1Container: {
     flex: 1, //화면 전체를 차지
-    backgroundColor: '#04bf33',
+    backgroundColor: '#00BC68',
     justifyContent: 'center', //세로 방향 가운데 정렬
     alignItems: 'center', //가로 방향 가운데 정렬 
   },
@@ -219,7 +219,7 @@ screen5UploadButtonText: {
   // ======================= Screen6 =======================
   screen6Container: {
     flex: 1,
-    backgroundColor: '#04bf33',
+    backgroundColor: '#00BC68',
     position: 'relative',
   },
 

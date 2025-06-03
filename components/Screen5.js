@@ -1,4 +1,3 @@
-// screens/Screen5.js
 import React from 'react';
 import { View, Image, TouchableOpacity, Text, Alert, Platform } from 'react-native';
 import { styles } from '../styles';
@@ -6,7 +5,6 @@ import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 
-//ipconfig getifaddr en0
 const API_URL = 'https://smishing-api-130947708321.asia-northeast3.run.app/ocr';
 
 const PICKER_OPTS = {
@@ -34,31 +32,38 @@ export default function Screen5() {
     if (assets.length === 0) return;
 
     try {
-      const results = await Promise.all(
-        assets.map(async (asset) => {
-          const processedUri = await processTo16x9(asset);
-          const response = await uploadToServer(processedUri);
-
-          const { result, combinedText } = response;
-
-          if (result?.isSmishing) {
-            Alert.alert(
-              '⚠️ 스미싱 의심',
-              `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
-            );
-          } else {
-            Alert.alert(
-              '✅ 안전한 문자',
-              `위험 점수: ${result?.riskScore?.toFixed(2) ?? 'N/A'}\n\n문자 내용:\n${combinedText}`
-            );
-          }
-
-          return response;
-        })
+      const processedUris = await Promise.all(
+        assets.map((asset) => processTo16x9(asset))
       );
 
-      console.log('✅ 모든 업로드 완료:', results);
-      Alert.alert('완료', `${results.length}장 업로드를 마쳤습니다.`);
+      const response = await uploadToServer(processedUris);
+
+      const { result, combinedText } = response;
+
+      // 결과 alert 먼저 보여주기
+      if (result?.isSmishing) {
+        Alert.alert(
+          '⚠️ 스미싱 의심',
+          `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
+        );
+      } else {
+        Alert.alert(
+          '✅ 안전한 문자',
+          `위험 점수: ${result?.riskScore?.toFixed(2) ?? 'N/A'}\n\n문자 내용:\n${combinedText}`
+        );
+      }
+
+      // ✅ 위험 점수 기준으로 화면 자동 전환
+      if (result?.riskScore !== undefined) {
+        const risk = parseFloat(result.riskScore);
+        if (risk <= 1.0) {
+          navigation.navigate('Screen6'); // 안전한 문자
+        } else {
+          navigation.navigate('Screen7'); // 스미싱 의심
+        }
+      }
+
+      console.log('✅ 업로드 결과:', response);
     } catch (err) {
       console.error('❗ 처리/업로드 오류:', err);
       Alert.alert('실패', '이미지를 업로드하는 중 문제가 발생했습니다.');
@@ -92,14 +97,17 @@ export default function Screen5() {
     return cropped;
   };
 
-  const uploadToServer = async (imageUri) => {
-    const filename = imageUri.split('/').pop() || `img_${Date.now()}.jpg`;
-
+  const uploadToServer = async (imageUris) => {
     const form = new FormData();
-    form.append('file', {
-      uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
-      name: filename,
-      type: 'image/jpeg',
+
+    imageUris.forEach((uri, idx) => {
+      const filename = uri.split('/').pop() || `img_${Date.now()}_${idx}.jpg`;
+
+      form.append('file', {
+        uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+        name: filename,
+        type: 'image/jpeg',
+      });
     });
 
     const res = await fetch(API_URL, {
