@@ -216,6 +216,17 @@ screen5UploadButtonText: {
 },
 
 
+noticeText: {
+  position: 'absolute',
+  textAlign: 'center',
+  fontSize: 14,
+  color: '#FF8800', // 오렌지 느낌의 강조색
+  lineHeight: 22,
+  fontWeight: '500',
+  bottom: height * 0.235,
+},
+
+
   // ======================= Screen6 =======================
   screen6Container: {
     flex: 1,
@@ -422,5 +433,4 @@ screen8Explanation: {
   resizeMode: 'contain',
   zIndex: 2,
 },
-
 });

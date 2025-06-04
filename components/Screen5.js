@@ -41,17 +41,17 @@ export default function Screen5() {
       const { result, combinedText } = response;
 
       // 결과 alert 먼저 보여주기
-      if (result?.isSmishing) {
-        Alert.alert(
-          '⚠️ 스미싱 의심',
-          `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
-        );
-      } else {
-        Alert.alert(
-          '✅ 안전한 문자',
-          `위험 점수: ${result?.riskScore?.toFixed(2) ?? 'N/A'}\n\n문자 내용:\n${combinedText}`
-        );
-      }
+      // if (result?.isSmishing) {
+      //   Alert.alert(
+      //     '⚠️ 스미싱 의심',
+      //     `위험 점수: ${result.riskScore.toFixed(2)}\n\n문자 내용:\n${combinedText}`
+      //   );
+      // } else {
+      //   Alert.alert(
+      //     '✅ 안전한 문자',
+      //     `위험 점수: ${result?.riskScore?.toFixed(2) ?? 'N/A'}\n\n문자 내용:\n${combinedText}`
+      //   );
+      // }
 
       // ✅ 위험 점수 기준으로 화면 자동 전환
       if (result?.riskScore !== undefined) {
@@ -134,6 +134,12 @@ export default function Screen5() {
       <TouchableOpacity style={styles.screen5UploadButton} onPress={handleImageUpload}>
         <Text style={styles.screen5UploadButtonText}>사진 업로드</Text>
       </TouchableOpacity>
+    
+      <Text style={styles.noticeText}>
+        ※ 긴 문자 메시지는 일부가 잘릴 수 있어요.{"\n"}
+        캡처 시 문자가 겹치도록 찍어주세요!
+      </Text>
+      
     </View>
   );
 }
